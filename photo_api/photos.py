@@ -29,7 +29,7 @@ def add_photos() -> int:
             except Exception as e:
                 raise e
             try:
-                photo = open("test_photo.jpg", "rb").read()
+                photo = open("test_photos/test_photo.jpg", "rb").read()
                 cur.execute(
                     "INSERT INTO rutebok.photos (id, photo) VALUES(%s, %s)",
                     (1, photo),
