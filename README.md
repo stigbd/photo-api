@@ -22,6 +22,7 @@ A small experiemental project to learn about storing and retrieving images from 
 To run it locally in your virtual development environment, run the following commands:
 
 ```zsh
+% poetry install
 % poetry run uvicorn photo_api.main:app --reload
 ```
 
