@@ -1,5 +1,6 @@
 """Test module for main.py."""
 import os
+import pathlib
 import time
 from typing import Any, Generator
 import uuid
@@ -30,6 +31,30 @@ POSTGRES_DB = os.getenv("POSTGRES_DB", "digital-rutebok")
 POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "rutebok")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
+
+
+@pytest.fixture(scope="session")
+def image(tmp_path_factory) -> pathlib.Path:
+    """Return a temporary folder with an image file.
+
+    Returns:
+        pathlib.Path: The path to the image file.
+    """
+    import random as r
+    from PIL import Image
+
+    fn = tmp_path_factory.mktemp("data") / "img.png"
+    im = Image.new("RGB", (100, 100))
+    pixels = im.load()
+    for x in range(im.size[0]):
+        for y in range(im.size[1]):
+            pixels[x, y] = (
+                r.randint(0, 255),  # noqa: S311
+                r.randint(0, 255),  # noqa: S311
+                r.randint(0, 255),  # noqa: S311
+            )
+    im.save(fn)
+    return fn
 
 
 @pytest.fixture(scope="session")
@@ -91,10 +116,10 @@ async def test_hello_world(database) -> None:
 
 
 @pytest.mark.anyio
-async def test_post_photos(database) -> None:
+async def test_post_photos(database, image) -> None:
     """Should return status 201 and the id in location header."""
     async with AsyncClient(app=app, base_url="http://test") as client:
-        with open("tests/test.jpg", "rb") as image:
+        with open(image, "rb") as image:
             data = image.read()
         response = await client.post("/photos", files={"file": data})
     assert response.status_code == status.HTTP_201_CREATED

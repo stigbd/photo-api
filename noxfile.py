@@ -72,6 +72,7 @@ def tests(session: Session) -> None:
         "docker",
         "anyio",
         "httpx",
+        "pillow",
     )
     session.run(
         "pytest",
