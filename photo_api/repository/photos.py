@@ -6,7 +6,7 @@ import psycopg
 from ..models import Photo
 
 
-def add_photo(photo: Photo) -> UUID:
+async def add_photo(photo: Photo) -> UUID:
     """Add a photo to the database.
 
     Args:
@@ -18,7 +18,7 @@ def add_photo(photo: Photo) -> UUID:
     Raises:
         Exception: An exception
     """
-    with psycopg.connect(
+    async with await psycopg.AsyncConnection.connect(
         "host=localhost"
         " port=5432"
         " sslmode=prefer"
@@ -26,11 +26,11 @@ def add_photo(photo: Photo) -> UUID:
         " user=postgres"
         " password=example",
         autocommit=False,
-    ) as conn:
-        with conn.cursor() as cur:
+    ) as aconn:
+        async with aconn.cursor() as cur:
             try:
-                cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
-                cur.execute(
+                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
+                await cur.execute(
                     (
                         "CREATE TABLE IF NOT EXISTS rutebok.photos "
                         "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
@@ -39,7 +39,7 @@ def add_photo(photo: Photo) -> UUID:
             except Exception as e:
                 raise e
             try:
-                cur.execute(
+                await cur.execute(
                     "INSERT INTO rutebok.photos (id, filename, photo) VALUES(%s, %s, %s)",
                     (photo.id, photo.filename, photo.content),
                 )
@@ -48,7 +48,7 @@ def add_photo(photo: Photo) -> UUID:
             return photo.id
 
 
-def get_photos() -> list:
+async def get_photos() -> list:
     """Get photos from the database.
 
     Returns:
@@ -57,7 +57,7 @@ def get_photos() -> list:
     Raises:
         Exception: An exception
     """
-    with psycopg.connect(
+    async with await psycopg.AsyncConnection.connect(
         "host=localhost"
         " port=5432"
         " sslmode=prefer"
@@ -65,12 +65,11 @@ def get_photos() -> list:
         " user=postgres"
         " password=example",
         autocommit=False,
-    ) as conn:
-        with conn.cursor() as cur:
+    ) as aconn:
+        async with aconn.cursor() as cur:
             try:
-                cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
-                cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
-                cur.execute(
+                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
+                await cur.execute(
                     (
                         "CREATE TABLE IF NOT EXISTS rutebok.photos "
                         "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
@@ -79,14 +78,17 @@ def get_photos() -> list:
             except Exception as e:
                 raise e
             try:
-                cur.execute("SELECT * FROM rutebok.photos;")
-                result = cur.fetchall()
+                await cur.execute("SELECT * FROM rutebok.photos;")
+                _result = await cur.fetchall()
+                result = []
+                for row in _result:
+                    result.append(Photo(id=row[0], filename=row[1], content=row[2]))
                 return result
             except Exception as e:
                 raise e
 
 
-def get_photo(id: str) -> Photo | None:
+async def get_photo(id: str) -> Photo | None:
     """Get a photo from the database.
 
     Args:
@@ -98,7 +100,7 @@ def get_photo(id: str) -> Photo | None:
     Raises:
         Exception: An exception
     """
-    with psycopg.connect(
+    async with await psycopg.AsyncConnection.connect(
         "host=localhost"
         " port=5432"
         " sslmode=prefer"
@@ -106,12 +108,11 @@ def get_photo(id: str) -> Photo | None:
         " user=postgres"
         " password=example",
         autocommit=False,
-    ) as conn:
-        with conn.cursor() as cur:
+    ) as aconn:
+        async with aconn.cursor() as cur:
             try:
-                cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
-                cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
-                cur.execute(
+                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
+                await cur.execute(
                     (
                         "CREATE TABLE IF NOT EXISTS rutebok.photos "
                         "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
@@ -120,8 +121,8 @@ def get_photo(id: str) -> Photo | None:
             except Exception as e:
                 raise e
             try:
-                cur.execute("SELECT * FROM rutebok.photos WHERE id = %s;", (id,))
-                result = cur.fetchone()
+                await cur.execute("SELECT * FROM rutebok.photos WHERE id = %s;", (id,))
+                result = await cur.fetchone()
             except Exception as e:
                 raise e
 

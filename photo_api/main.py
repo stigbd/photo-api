@@ -1,19 +1,18 @@
 """Photo API main module."""
 import logging
-from typing import Annotated, Any
+from typing import Any
 from uuid import uuid4
 
-from litestar import get, Litestar, MediaType, post, Response
-from litestar.datastructures import UploadFile
-from litestar.enums import RequestEncodingType
-from litestar.params import Body
-from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
+from fastapi import FastAPI, HTTPException, status, UploadFile
+from fastapi.responses import JSONResponse
 
-from .models import Photo
+from .models import Photo, PhotoOut
 from .repository import add_photo, get_photo, get_photos
 
+app = FastAPI(debug=True)
 
-@get("/", status_code=HTTP_200_OK, content_media_type=MediaType.JSON)
+
+@app.get("/")
 async def hello_world_route() -> dict[str, str]:
     """A simple hello world route.
 
@@ -23,41 +22,44 @@ async def hello_world_route() -> dict[str, str]:
     return {"message": "Hello World"}
 
 
-@post(
-    "photos",
-    status_code=HTTP_201_CREATED,
-)
+@app.post("/photos")
 async def post_photo_handler(
-    data: Annotated[UploadFile, Body(media_type=RequestEncodingType.MULTI_PART)],
-) -> Response:
+    file: UploadFile, status_code: int = status.HTTP_201_CREATED
+) -> JSONResponse:
     """Add a new photo.
 
     Args:
-        data (UploadFile): The data from the request.
+        file (UploadFile): The file from the request.
+        status_code (int): The status code. Defaults to status.HTTP_201_CREATED.
 
     Returns:
-        Response: A response with location header.
+        JSONResponse: A response with location header.
 
     Raises:
         Exception: An exception
     """
-    content = await data.read()
-    filename = data.filename
+    content = await file.read()
+    filename = file.filename if file.filename else ""
     try:
         id = uuid4()
-        photo: Photo = Photo(id, filename, content)
-        id = add_photo(photo)
+        photo: Photo = Photo(id=id, filename=filename, content=content)
+        id = await add_photo(photo)
     except Exception as e:
         logging.exception(e)
         raise e
-    return Response(
+    return JSONResponse(
+        status_code=status_code,
         content={"id": str(id)},
         headers={"Location": f"/photos/{str(id)}"},
     )
 
 
-@get("/photos", status_code=HTTP_200_OK)
-async def get_photos_handler() -> list[Photo]:
+@app.get(
+    "/photos",
+    response_model=list[PhotoOut],
+    status_code=status.HTTP_200_OK,
+)
+async def get_photos_handler() -> list[PhotoOut]:
     """Get a list of photos.
 
     Returns:
@@ -67,39 +69,32 @@ async def get_photos_handler() -> list[Photo]:
         Exception: An exception
     """
     try:
-        photos = get_photos()
+        photos = await get_photos()
     except Exception as e:
         logging.exception(e)
         raise e
     return photos
 
 
-@get("/photos/{id:str}", status_code=HTTP_200_OK)
-async def get_photo_handler(id: str) -> dict[str, Any]:
+@app.get("/photos/{id:str}", response_model=PhotoOut, status_code=status.HTTP_200_OK)
+async def get_photo_handler(id: str) -> Any:
     """Get a single Photo.
 
     Args:
         id (str): The uuid of the photo.
 
     Returns:
-        Photo: A photo with the given uuid.
+        Any: A photo with the given uuid.
 
     Raises:
+        HTTPException: If the photo is not found.
         Exception: An exception
     """
     try:
-        photo = get_photo(id)
+        photo = await get_photo(id)
+        if not photo:
+            raise HTTPException(status_code=404, detail="Photo not found")
     except Exception as e:
         logging.exception(e)
         raise e
-    return photo.__dict__
-
-
-app = Litestar(
-    route_handlers=[
-        hello_world_route,
-        post_photo_handler,
-        get_photos_handler,
-        get_photo_handler,
-    ]
-)
+    return photo

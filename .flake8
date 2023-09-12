@@ -7,6 +7,6 @@ max-line-length = 100
 per-file-ignores =
     __init__.py: F401
     noxfile.py: DAR101
-    tests/*: S101,E800,F401
+    tests/*: ANN001,DAR101,DAR301,S101,E800,F401
 import-order-style = google
 application-import-names = photo_api

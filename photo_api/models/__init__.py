@@ -1,2 +1,2 @@
 """Models package for photo_api."""
-from .photo import Photo
+from .photo import Photo, PhotoOut

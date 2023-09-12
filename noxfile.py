@@ -69,10 +69,9 @@ def tests(session: Session) -> None:
         "coverage[toml]",
         "pytest",
         "pytest-cov",
-        "pytest-mock",
-        "pytest-postgresql",
         "docker",
-        "pytest-asyncio",
+        "anyio",
+        "httpx",
     )
     session.run(
         "pytest",
