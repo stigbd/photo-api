@@ -34,7 +34,7 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
 
 
 @pytest.fixture(scope="session")
-def image(tmp_path_factory) -> pathlib.Path:
+def image_file(tmp_path_factory) -> pathlib.Path:
     """Return a temporary folder with an image file.
 
     Returns:
@@ -116,10 +116,10 @@ async def test_hello_world(database) -> None:
 
 
 @pytest.mark.anyio
-async def test_post_photos(database, image) -> None:
+async def test_post_photos(database, image_file) -> None:
     """Should return status 201 and the id in location header."""
     async with AsyncClient(app=app, base_url="http://test") as client:
-        with open(image, "rb") as image:
+        with open(image_file, "rb") as image:
             data = image.read()
         response = await client.post("/photos", files={"file": data})
     assert response.status_code == status.HTTP_201_CREATED
@@ -151,6 +151,19 @@ async def test_get_photo(database) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "application/json"
     assert type(response.json()) == dict
+
+
+@pytest.mark.anyio
+async def test_get_photo_download(database, image_file) -> None:
+    """Should return a photo."""
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/photos")
+        photo_id = response.json()[0]["id"]
+        response = await client.get(f"/photos/{photo_id}/download")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.headers["content-type"] == "image/png"
+    assert type(response.content) == bytes
+    assert len(response.content) == len(open(image_file, "rb").read())
 
 
 @pytest.mark.anyio

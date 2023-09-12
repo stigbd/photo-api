@@ -4,7 +4,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, status, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from .models import Photo, PhotoOut
 from .repository import add_photo, get_photo, get_photos
@@ -98,3 +98,34 @@ async def get_photo_handler(id: str) -> Any:
         logging.exception(e)
         raise e
     return photo
+
+
+@app.get(
+    "/photos/{id:str}/download",
+    response_class=Response,
+    status_code=status.HTTP_200_OK,
+)
+async def get_photo_download_handler(id: str) -> Response:
+    """Get a single Photo.
+
+    Args:
+        id (str): The uuid of the photo.
+
+    Returns:
+        Response: A file with the given photo.
+
+    Raises:
+        HTTPException: If the photo is not found.
+        Exception: An exception
+    """
+    try:
+        photo = await get_photo(id)
+        if not photo:
+            raise HTTPException(status_code=404, detail="Photo not found")
+    except Exception as e:
+        logging.exception(e)
+        raise e
+    return Response(
+        content=photo.content,
+        media_type="image/png",
+    )
