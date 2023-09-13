@@ -27,8 +27,8 @@ def anyio_backend() -> str:
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
 POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "prefer")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "digital-rutebok")
-POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "rutebok")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "phtoto_api")
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "public")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
 
@@ -97,10 +97,10 @@ def database(psql_docker: Generator) -> Any:
         autocommit=False,
     ) as conn:
         with conn.cursor() as cur:
-            cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
+            cur.execute(f"CREATE SCHEMA IF NOT EXISTS {POSTGRES_SCHEMA};")
             cur.execute(
                 (
-                    "CREATE TABLE IF NOT EXISTS rutebok.photos "
+                    f"CREATE TABLE IF NOT EXISTS {POSTGRES_SCHEMA}.photos "
                     "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
                 )
             )

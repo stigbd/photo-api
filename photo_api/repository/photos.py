@@ -3,14 +3,15 @@ import os
 from uuid import UUID
 
 import psycopg
+from psycopg import sql
 
 from ..models import Photo
 
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
 POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "prefer")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "digital-rutebok")
-POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "rutebok")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "phtoto_api")
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "public")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
 
@@ -38,18 +39,26 @@ async def add_photo(photo: Photo) -> UUID:
     ) as aconn:
         async with aconn.cursor() as cur:
             try:
-                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
                 await cur.execute(
-                    (
-                        "CREATE TABLE IF NOT EXISTS rutebok.photos "
-                        "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
+                    sql.SQL("CREATE SCHEMA IF NOT EXISTS {};").format(
+                        sql.Identifier(POSTGRES_SCHEMA)
                     )
+                )
+                await cur.execute(
+                    sql.SQL(
+                        """
+                    CREATE TABLE IF NOT EXISTS {}.photos
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    """
+                    ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
             except Exception as e:
                 raise e
             try:
                 await cur.execute(
-                    "INSERT INTO rutebok.photos (id, filename, photo) VALUES(%s, %s, %s)",
+                    sql.SQL(
+                        "INSERT INTO {}.photos (id, filename, photo) VALUES(%s, %s, %s)"
+                    ).format(sql.Identifier(POSTGRES_SCHEMA)),
                     (photo.id, photo.filename, photo.content),
                 )
             except Exception as e:
@@ -77,17 +86,27 @@ async def get_photos() -> list:
     ) as aconn:
         async with aconn.cursor() as cur:
             try:
-                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
                 await cur.execute(
-                    (
-                        "CREATE TABLE IF NOT EXISTS rutebok.photos "
-                        "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
+                    sql.SQL("CREATE SCHEMA IF NOT EXISTS {};").format(
+                        sql.Identifier(POSTGRES_SCHEMA)
                     )
+                )
+                await cur.execute(
+                    sql.SQL(
+                        """
+                    CREATE TABLE IF NOT EXISTS {}.photos
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    """
+                    ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
             except Exception as e:
                 raise e
             try:
-                await cur.execute("SELECT * FROM rutebok.photos;")
+                await cur.execute(
+                    sql.SQL("SELECT * FROM {}.photos;").format(
+                        sql.Identifier(POSTGRES_SCHEMA)
+                    )
+                )
                 _result = await cur.fetchall()
                 result = []
                 for row in _result:
@@ -120,17 +139,28 @@ async def get_photo(id: str) -> Photo | None:
     ) as aconn:
         async with aconn.cursor() as cur:
             try:
-                await cur.execute("CREATE SCHEMA IF NOT EXISTS rutebok;")
                 await cur.execute(
-                    (
-                        "CREATE TABLE IF NOT EXISTS rutebok.photos "
-                        "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
+                    sql.SQL("CREATE SCHEMA IF NOT EXISTS {};").format(
+                        sql.Identifier(POSTGRES_SCHEMA)
                     )
+                )
+                await cur.execute(
+                    sql.SQL(
+                        """
+                    CREATE TABLE IF NOT EXISTS {}.photos
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    """
+                    ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
             except Exception as e:
                 raise e
             try:
-                await cur.execute("SELECT * FROM rutebok.photos WHERE id = %s;", (id,))
+                await cur.execute(
+                    sql.SQL("SELECT * FROM {}.photos WHERE id = %s;").format(
+                        sql.Identifier(POSTGRES_SCHEMA)
+                    ),
+                    (id,),
+                )
                 result = await cur.fetchone()
             except Exception as e:
                 raise e
