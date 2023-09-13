@@ -78,6 +78,15 @@ def tests(session: Session) -> None:
         "pytest",
         "-ra",
         *args,
+        env={
+            "POSTGRES_HOST": "localhost",
+            "POSTGRES_PORT": "6543",
+            "POSTGRES_SSLMODE": "prefer",
+            "POSTGRES_DB": "photo_api",
+            "POSTGRES_SCHEMA": "photo_api",
+            "POSTGRES_USER": "postgres",
+            "POSTGRES_PASSWORD": "example",
+        },
     )
 
 

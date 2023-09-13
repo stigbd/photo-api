@@ -1,9 +1,18 @@
 """This module contains functions for adding and getting photos from the database."""
+import os
 from uuid import UUID
 
 import psycopg
 
 from ..models import Photo
+
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
+POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "prefer")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "digital-rutebok")
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "rutebok")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
 
 
 async def add_photo(photo: Photo) -> UUID:
@@ -19,12 +28,12 @@ async def add_photo(photo: Photo) -> UUID:
         Exception: An exception
     """
     async with await psycopg.AsyncConnection.connect(
-        "host=localhost"
-        " port=5432"
-        " sslmode=prefer"
-        " dbname=digital-rutebok"
-        " user=postgres"
-        " password=example",
+        f"host={POSTGRES_HOST}"
+        f" port={POSTGRES_PORT}"
+        f" sslmode={POSTGRES_SSLMODE}"
+        f" dbname={POSTGRES_DB}"
+        f" user={POSTGRES_USER}"
+        f" password={POSTGRES_PASSWORD}",
         autocommit=False,
     ) as aconn:
         async with aconn.cursor() as cur:
@@ -58,12 +67,12 @@ async def get_photos() -> list:
         Exception: An exception
     """
     async with await psycopg.AsyncConnection.connect(
-        "host=localhost"
-        " port=5432"
-        " sslmode=prefer"
-        " dbname=digital-rutebok"
-        " user=postgres"
-        " password=example",
+        f"host={POSTGRES_HOST}"
+        f" port={POSTGRES_PORT}"
+        f" sslmode={POSTGRES_SSLMODE}"
+        f" dbname={POSTGRES_DB}"
+        f" user={POSTGRES_USER}"
+        f" password={POSTGRES_PASSWORD}",
         autocommit=False,
     ) as aconn:
         async with aconn.cursor() as cur:
@@ -101,12 +110,12 @@ async def get_photo(id: str) -> Photo | None:
         Exception: An exception
     """
     async with await psycopg.AsyncConnection.connect(
-        "host=localhost"
-        " port=5432"
-        " sslmode=prefer"
-        " dbname=digital-rutebok"
-        " user=postgres"
-        " password=example",
+        f"host={POSTGRES_HOST}"
+        f" port={POSTGRES_PORT}"
+        f" sslmode={POSTGRES_SSLMODE}"
+        f" dbname={POSTGRES_DB}"
+        f" user={POSTGRES_USER}"
+        f" password={POSTGRES_PASSWORD}",
         autocommit=False,
     ) as aconn:
         async with aconn.cursor() as cur:

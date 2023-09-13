@@ -88,12 +88,12 @@ def psql_docker() -> Generator:
 def database(psql_docker: Generator) -> Any:
     """Create a database."""
     with psycopg.connect(
-        "host=localhost"
-        " port=5432"
-        " sslmode=prefer"
-        " dbname=digital-rutebok"
-        " user=postgres"
-        " password=example",
+        f"host={POSTGRES_HOST}"
+        f" port={POSTGRES_PORT}"
+        f" sslmode={POSTGRES_SSLMODE}"
+        f" dbname={POSTGRES_DB}"
+        f" user={POSTGRES_USER}"
+        f" password={POSTGRES_PASSWORD}",
         autocommit=False,
     ) as conn:
         with conn.cursor() as cur:
@@ -124,7 +124,7 @@ async def test_post_photos(database, image_file) -> None:
         response = await client.post("/photos", files={"file": data})
     assert response.status_code == status.HTTP_201_CREATED
     assert response.headers["content-type"] == "application/json"
-    assert type(response.json()) == dict
+    assert type(response.json()) is dict
     assert "id" in response.json()
     assert "Location" in response.headers
     assert response.headers["Location"] == f"/photos/{response.json()['id']}"
@@ -137,7 +137,7 @@ async def test_get_photos(database) -> None:
         response = await client.get("/photos")
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "application/json"
-    assert type(response.json()) == list
+    assert type(response.json()) is list
     assert len(response.json()) == 1
 
 
@@ -150,7 +150,7 @@ async def test_get_photo(database) -> None:
         response = await client.get(f"/photos/{photo_id}")
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "application/json"
-    assert type(response.json()) == dict
+    assert type(response.json()) is dict
 
 
 @pytest.mark.anyio
@@ -162,7 +162,7 @@ async def test_get_photo_download(database, image_file) -> None:
         response = await client.get(f"/photos/{photo_id}/download")
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "image/png"
-    assert type(response.content) == bytes
+    assert type(response.content) is bytes
     assert len(response.content) == len(open(image_file, "rb").read())
 
 
@@ -174,5 +174,5 @@ async def test_get_photo_not_found(database) -> None:
         response = await client.get(f"/photos/{photo_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.headers["content-type"] == "application/json"
-    assert type(response.json()) == dict
+    assert type(response.json()) is dict
     assert response.json()["detail"] == "Photo not found"
