@@ -1,7 +1,7 @@
 """Photo API main module."""
 import logging
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import FastAPI, HTTPException, status, UploadFile
 from fastapi.responses import JSONResponse, Response
@@ -91,12 +91,17 @@ async def get_photo_handler(id: str) -> Any:
         Exception: An exception
     """
     try:
+        UUID(id, version=4)
         photo = await get_photo(id)
         if not photo:
-            raise HTTPException(status_code=404, detail="Photo not found")
+            raise HTTPException(status_code=404, detail="Photo not found.")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400, detail="Invalid uuid in path parameter."
+        ) from e
     except Exception as e:
         logging.exception(e)
-        raise e
+        raise e from e
     return photo
 
 
@@ -119,12 +124,18 @@ async def get_photo_download_handler(id: str) -> Response:
         Exception: An exception
     """
     try:
+        UUID(id, version=4)
         photo = await get_photo(id)
         if not photo:
             raise HTTPException(status_code=404, detail="Photo not found")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400, detail="Invalid uuid in path parameter."
+        ) from e
     except Exception as e:
         logging.exception(e)
         raise e
+
     return Response(
         content=photo.content,
         media_type="image/png",
