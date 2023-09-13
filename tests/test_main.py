@@ -173,6 +173,7 @@ async def test_get_photo_download(database, image_file) -> None:
     assert response.headers["content-type"] == "image/png"
     assert type(response.content) is bytes
     assert len(response.content) == len(open(image_file, "rb").read())
+    assert response.content == open(image_file, "rb").read()
 
 
 @pytest.mark.anyio
