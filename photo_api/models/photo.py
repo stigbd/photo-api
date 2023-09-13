@@ -9,6 +9,7 @@ class Photo(BaseModel):
 
     id: UUID
     filename: str
+    size: int
     content: bytes
 
 
@@ -17,3 +18,4 @@ class PhotoOut(BaseModel):
 
     id: UUID
     filename: str
+    size: int

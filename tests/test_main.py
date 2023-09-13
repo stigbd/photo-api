@@ -9,6 +9,7 @@ import docker
 from fastapi import status
 from httpx import AsyncClient
 import psycopg
+from psycopg import sql
 import pytest
 
 from photo_api.main import app
@@ -97,12 +98,16 @@ def database(psql_docker: Generator) -> Any:
         autocommit=False,
     ) as conn:
         with conn.cursor() as cur:
-            cur.execute(f"CREATE SCHEMA IF NOT EXISTS {POSTGRES_SCHEMA};")
             cur.execute(
-                (
-                    f"CREATE TABLE IF NOT EXISTS {POSTGRES_SCHEMA}.photos "
-                    "(id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);"
+                sql.SQL("CREATE SCHEMA IF NOT EXISTS {};").format(
+                    sql.Identifier(POSTGRES_SCHEMA)
                 )
+            )
+            cur.execute(
+                sql.SQL(
+                    "CREATE TABLE IF NOT EXISTS {}.photos "
+                    "(id uuid PRIMARY KEY, filename VARCHAR(250), size INTEGER, photo BYTEA);"
+                ).format(sql.Identifier(POSTGRES_SCHEMA)),
             )
 
 
@@ -121,7 +126,8 @@ async def test_post_photos(database, image_file) -> None:
     async with AsyncClient(app=app, base_url="http://test") as client:
         with open(image_file, "rb") as image:
             data = image.read()
-        response = await client.post("/photos", files={"file": data})
+        files = {"file": ("img.png", data)}
+        response = await client.post("/photos", files=files)
     assert response.status_code == status.HTTP_201_CREATED
     assert response.headers["content-type"] == "application/json"
     assert type(response.json()) is dict
@@ -142,8 +148,8 @@ async def test_get_photos(database) -> None:
 
 
 @pytest.mark.anyio
-async def test_get_photo(database) -> None:
-    """Should return a photo."""
+async def test_get_photo_by_id(database, image_file) -> None:
+    """Should return a photo with the given id."""
     async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.get("/photos")
         photo_id = response.json()[0]["id"]
@@ -151,6 +157,9 @@ async def test_get_photo(database) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "application/json"
     assert type(response.json()) is dict
+    assert response.json()["id"] == photo_id
+    assert response.json()["filename"] == "img.png"
+    assert response.json()["size"] == len(open(image_file, "rb").read())
 
 
 @pytest.mark.anyio
@@ -175,4 +184,4 @@ async def test_get_photo_not_found(database) -> None:
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.headers["content-type"] == "application/json"
     assert type(response.json()) is dict
-    assert response.json()["detail"] == "Photo not found"
+    assert response.json()["detail"] == "Photo not found."

@@ -40,9 +40,10 @@ async def post_photo_handler(
     """
     content = await file.read()
     filename = file.filename if file.filename else ""
+    size = len(content)
     try:
         id = uuid4()
-        photo: Photo = Photo(id=id, filename=filename, content=content)
+        photo: Photo = Photo(id=id, filename=filename, size=size, content=content)
         id = await add_photo(photo)
     except Exception as e:
         logging.exception(e)
@@ -97,7 +98,7 @@ async def get_photo_handler(id: str) -> Any:
             raise HTTPException(status_code=404, detail="Photo not found.")
     except ValueError as e:
         raise HTTPException(
-            status_code=400, detail="Invalid uuid in path parameter."
+            status_code=400, detail=f"Invalid uuid in path parameter: {id}."
         ) from e
     except Exception as e:
         logging.exception(e)
@@ -130,7 +131,7 @@ async def get_photo_download_handler(id: str) -> Response:
             raise HTTPException(status_code=404, detail="Photo not found")
     except ValueError as e:
         raise HTTPException(
-            status_code=400, detail="Invalid uuid in path parameter."
+            status_code=400, detail=f"Invalid uuid in path parameter: {id}."
         ) from e
     except Exception as e:
         logging.exception(e)

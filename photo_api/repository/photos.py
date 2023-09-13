@@ -48,7 +48,7 @@ async def add_photo(photo: Photo) -> UUID:
                     sql.SQL(
                         """
                     CREATE TABLE IF NOT EXISTS {}.photos
-                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), size INTEGER,photo BYTEA);
                     """
                     ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
@@ -57,9 +57,9 @@ async def add_photo(photo: Photo) -> UUID:
             try:
                 await cur.execute(
                     sql.SQL(
-                        "INSERT INTO {}.photos (id, filename, photo) VALUES(%s, %s, %s)"
+                        "INSERT INTO {}.photos (id, filename, size, photo) VALUES(%s, %s, %s, %s)"
                     ).format(sql.Identifier(POSTGRES_SCHEMA)),
-                    (photo.id, photo.filename, photo.content),
+                    (photo.id, photo.filename, photo.size, photo.content),
                 )
             except Exception as e:
                 raise e
@@ -95,7 +95,7 @@ async def get_photos() -> list:
                     sql.SQL(
                         """
                     CREATE TABLE IF NOT EXISTS {}.photos
-                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), size INTEGER, photo BYTEA);
                     """
                     ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
@@ -110,7 +110,9 @@ async def get_photos() -> list:
                 _result = await cur.fetchall()
                 result = []
                 for row in _result:
-                    result.append(Photo(id=row[0], filename=row[1], content=row[2]))
+                    result.append(
+                        Photo(id=row[0], filename=row[1], size=row[2], content=row[3])
+                    )
                 return result
             except Exception as e:
                 raise e
@@ -148,7 +150,7 @@ async def get_photo(id: str) -> Photo | None:
                     sql.SQL(
                         """
                     CREATE TABLE IF NOT EXISTS {}.photos
-                    (id uuid PRIMARY KEY, filename VARCHAR(250), photo BYTEA);
+                    (id uuid PRIMARY KEY, filename VARCHAR(250), size INTEGER, photo BYTEA);
                     """
                     ).format(sql.Identifier(POSTGRES_SCHEMA)),
                 )
@@ -166,7 +168,9 @@ async def get_photo(id: str) -> Photo | None:
                 raise e
 
             return (
-                Photo(id=result[0], filename=result[1], content=result[2])
+                Photo(
+                    id=result[0], filename=result[1], size=result[2], content=result[3]
+                )
                 if result
                 else None
             )
