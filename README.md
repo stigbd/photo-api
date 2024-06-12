@@ -33,7 +33,7 @@ To run it locally in a Docker container, run the following commands:
 % docker run -p 8000:8000 photo_api
 ```
 
-Or in docker compose with a postgres database:
+Or in docker compose with a postgres database and [adminer](https://www.adminer.org/)):
 
 ```zsh
 % docker compose up
